@@ -18,7 +18,7 @@ DCOMPILE_FLAGS = -D DEBUG
 # Add additional include paths
 INCLUDES = -I $(SRC_PATH) -Iinclude $(shell pkg-config sdl2 --cflags)
 # General linker settings
-LINK_FLAGS = $(shell pkg-config sdl2 --libs) -lglut -lGLU -lGL
+LINK_FLAGS = $(shell pkg-config sdl2 --libs) -lglut -lGL
 # Additional release-specific linker settings
 RLINK_FLAGS =
 # Additional debug-specific linker settings
