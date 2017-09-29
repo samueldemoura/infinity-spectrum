@@ -6,6 +6,9 @@
 #include <string>
 
 #include <SDL.h>
+#include <GL/gl.h>
+
+#include <glm/mat4x4.hpp> // glm::mat4
 
 class Engine
 {
@@ -13,6 +16,12 @@ class Engine
 		SDL_Window* gameWindow;
 		SDL_GLContext gameContext;
 		std::ofstream logFile;
+
+		GLuint mainShaderProgramID, vertexArrayID, vertexBufferID, pipelineMatrixID;
+
+		glm::mat4 modelMatrix, viewMatrix, projectionMatrix, pipelineMatrix;
+
+		void SceneSetup();
 		void Update();
 		void Draw();
 
