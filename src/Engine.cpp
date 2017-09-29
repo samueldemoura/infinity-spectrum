@@ -20,13 +20,13 @@ bool Engine::Initialize(int argc, char *argv[])
 {
 	// Prepare log file
 	logFile.open("log.txt", std::ofstream::out | std::ofstream::app);
-	this->Log("--- LAUNCHING GAME ---");
+	Log("--- LAUNCHING GAME ---");
 
 	// Initialize OpenGL with SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
-		this->Log("ERROR: Failed to initialize SDL...");
-		this->Log(SDL_GetError());
+		Log("ERROR: Failed to initialize SDL...");
+		Log(SDL_GetError());
 		return 0;
 	}
 
@@ -44,24 +44,27 @@ bool Engine::Initialize(int argc, char *argv[])
 
 	if (!gameContext)
 	{
-		this->Log("ERROR: Failed to create GLContext...");
-		this->Log(SDL_GetError());
+		Log("ERROR: Failed to create GLContext...");
+		Log(SDL_GetError());
 		return 0;
 	}
+
+	// Handle directional keys
+	keystate = SDL_GetKeyboardState(NULL);
 
 	// VAO, VBO, matrix & shader setup
 	glutInit(&argc, argv);
 	SceneSetup();
 
 	// Successfully initialized
-	this->Log("LOG: OpenGL window initialized");
-	std::cout << glGetString(GL_VERSION);
+	Log("LOG: OpenGL window initialized");
+	std::cout << glGetString(GL_VERSION) << std::endl;
 	return 1;
 }
 
 void Engine::Shutdown()
 {
-	this->Log("--- SHUTTING DOWN ---");
+	Log("--- SHUTTING DOWN ---");
 	logFile.close();
 
 	// Release resources
@@ -90,6 +93,9 @@ void Engine::SceneSetup()
 
 	// Pipeline matrix: all of the previous, put together
 	pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
+
+	//
+	//glm::mat4 translate = glm::rotate(glm::mat4(1.f), 30.f, glm::vec3(0.f, 1.f, 0.f));
 
 	///
 	/// Shaders
@@ -137,12 +143,15 @@ void Engine::SceneSetup()
 ///
 bool Engine::GameLoop()
 {
-	this->Log("LOG: Entering game loop");
+	Log("LOG: Entering game loop");
 	SDL_Event event;
 	bool keepRunning = 1;
+	tickStart = SDL_GetTicks();
 
 	while (keepRunning)
 	{
+		tickEnd = tickStart;
+		tickStart = SDL_GetTicks();
 		while (SDL_PollEvent(&event))
 		{
 			// Exit game loop
@@ -162,23 +171,47 @@ bool Engine::GameLoop()
 					break;
 				}
 			}
-
-			// Run game logic & draw onto screen
-			this->Update();
-			this->Draw();
 		}
+
+		// Run game logic & draw onto screen
+		Update(SDL_TICKS_PASSED(tickStart, tickEnd));
+		Draw();
 	}
 
-	this->Log("LOG: Exiting game loop");
+	Log("LOG: Exiting game loop");
 	return 1;
 }
 
 ///
 /// Game logic
 ///
-void Engine::Update()
+void Engine::Update(Uint32 elapsedTime)
 {
-	// TODO
+	//glm::mat4 translate = glm::rotate(glm::mat4(1.f), elapsedTime * 0.02f, glm::vec3(0.f, 0.f, 1.f));
+
+	if (keystate[SDL_SCANCODE_RIGHT])
+	{
+		// Move
+		glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(elapsedTime * 0.01f, 0.f, 0.f));
+
+		// Apply the translate to the model matrix
+		modelMatrix *= translate;
+
+		// Update pipeline matrix
+		pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
+	}
+
+	if (keystate[SDL_SCANCODE_LEFT])
+	{
+		// Move
+		glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(elapsedTime * -0.01f, 0.f, 0.f));
+
+		// Apply the translate to the model matrix
+		modelMatrix *= translate;
+
+		// Update pipeline matrix
+		pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
+	}
 }
 
 ///

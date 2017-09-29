@@ -16,13 +16,16 @@ class Engine
 		SDL_Window* gameWindow;
 		SDL_GLContext gameContext;
 		std::ofstream logFile;
+		Uint32 tickStart, tickEnd;
 
 		GLuint mainShaderProgramID, vertexArrayID, vertexBufferID, pipelineMatrixID;
 
 		glm::mat4 modelMatrix, viewMatrix, projectionMatrix, pipelineMatrix;
 
+		const unsigned char* keystate;
+
 		void SceneSetup();
-		void Update();
+		void Update(Uint32 elapsedTime);
 		void Draw();
 
 		// 0 - Main menu, 1 - Highscores, 2 - Options, 3 - Gameplay
