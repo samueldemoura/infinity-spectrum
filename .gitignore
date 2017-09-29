@@ -2,5 +2,7 @@ local/
 build/
 bin/
 
+log.txt
+
 */.*
 .*
