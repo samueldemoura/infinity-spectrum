@@ -125,14 +125,22 @@ bool Engine::GameLoop()
 ///
 void Engine::Update(Uint32 elapsedTime)
 {
-	//glm::mat4 translate = glm::rotate(glm::mat4(1.f), elapsedTime * 0.02f, glm::vec3(0.f, 0.f, 1.f));
-
 	if (keystate[SDL_SCANCODE_RIGHT])
+	{
+		geometryHandler.Rotate(elapsedTime, 1);
+	}
+
+	if (keystate[SDL_SCANCODE_LEFT])
+	{
+		geometryHandler.Rotate(elapsedTime, -1);
+	}
+
+	if (keystate[SDL_SCANCODE_UP])
 	{
 		geometryHandler.Move(elapsedTime, 1);
 	}
 
-	if (keystate[SDL_SCANCODE_LEFT])
+	if (keystate[SDL_SCANCODE_DOWN])
 	{
 		geometryHandler.Move(elapsedTime, -1);
 	}
