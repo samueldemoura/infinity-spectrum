@@ -25,12 +25,15 @@ class Geometry
 		GLuint shaderProgramID[MAX_SHADERS];
 
 		// Holds reference for "MVP" uniform inside
-		// the generic vertex shader. Responsible
+		// the vertex shader. Responsible
 		// for perspective distortion.
-		GLuint pipelineMatrixID;
+		GLuint pipelineMatrixID[MAX_SHADERS];
 
 		// Level obstacles
 		std::queue<Obstacle> obstacles;
+		
+		// In degrees
+		double tunnelRotation;
 
 	public:
 		void InitMatrixes();
@@ -38,7 +41,10 @@ class Geometry
 		void InitGeometry();
 		void Draw();
 
+		void Rotate(Uint32 elapsedTime, int dir);
 		void Move(Uint32 elapsedTime, int dir);
+
+		double GetRotation();
 };
 
 #endif
