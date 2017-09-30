@@ -1,17 +1,15 @@
-#include <iostream>
-#include <fstream>
-
 #define GL_GLEXT_PROTOTYPES 1
 #define GL3_PROTOTYPES 1
+
+#include <iostream>
+#include <fstream>
 
 #include <SDL.h>
 #include <GL/glut.h>
 #include <GL/gl.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 
 #include <Engine.h>
-#include <ShaderLoader.h>
+#include <Geometry.h>
 
 ///
 /// Startup & shutdown
@@ -22,7 +20,7 @@ bool Engine::Initialize(int argc, char *argv[])
 	logFile.open("log.txt", std::ofstream::out | std::ofstream::app);
 	Log("--- LAUNCHING GAME ---");
 
-	// Initialize OpenGL with SDL
+	// Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
 		Log("ERROR: Failed to initialize SDL...");
@@ -30,9 +28,7 @@ bool Engine::Initialize(int argc, char *argv[])
 		return 0;
 	}
 
-	///
-	/// OpenGL options
-	///
+	/// OpenGL options & SDL window creation
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -49,16 +45,23 @@ bool Engine::Initialize(int argc, char *argv[])
 		return 0;
 	}
 
-	// Handle directional keys
+	// Pointer to keyboard state
 	keystate = SDL_GetKeyboardState(NULL);
 
-	// VAO, VBO, matrix & shader setup
+	// More OpenGL options, after context creation
 	glutInit(&argc, argv);
-	SceneSetup();
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	
+	// Game geometry setup
+	geometryHandler.InitMatrixes();
+	geometryHandler.InitShaders();
+	geometryHandler.InitGeometry();
 
 	// Successfully initialized
 	Log("LOG: OpenGL window initialized");
 	std::cout << glGetString(GL_VERSION) << std::endl;
+
 	return 1;
 }
 
@@ -71,71 +74,6 @@ void Engine::Shutdown()
 	SDL_GL_DeleteContext(gameContext);
 	SDL_DestroyWindow(gameWindow);
 	SDL_Quit();
-}
-
-///
-/// VAO, VBO, matrix & shader setup
-///
-void Engine::SceneSetup()
-{
-	///
-	/// Matrixes
-	///
-
-	// Projection matrix : 90° Field of View, 16:9 aspect ratio, display range: 0.1 unit <-> 100 units
-	projectionMatrix = glm::perspective(glm::radians(90.0f), 16.0f/9.0f, 0.1f, 100.0f);
-
-	// View matrix: camera at (4,3,3) looks at (0,0,0), Y is up (0, 1, 0)
-	viewMatrix = glm::lookAt(glm::vec3(4, 3, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
-	// Model matrix: identity matrix
-	modelMatrix = glm::mat4(1.0f);
-
-	// Pipeline matrix: all of the previous, put together
-	pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
-
-	//
-	//glm::mat4 translate = glm::rotate(glm::mat4(1.f), 30.f, glm::vec3(0.f, 1.f, 0.f));
-
-	///
-	/// Shaders
-	///
-
-	// Compile shaders
-	mainShaderProgramID = LoadShaders("res/vertexShader.vert", "res/fragmentShader.frag");
-
-	// Get a handle for the "MVP" uniform inside our shader
-	pipelineMatrixID = glGetUniformLocation(mainShaderProgramID, "MVP");
-
-	///
-	/// VAO & VBO Setup
-	///
-	glGenVertexArrays(1, &vertexArrayID);
-	glBindVertexArray(vertexArrayID);
-
-	// Create our triangle's polygons
-	static const GLfloat g_vertex_buffer_data[] = {
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,
-		0.0f,  1.0f, 0.0f,
-	};
-
-	// Generate a vertex buffer and put the identifier in vertexBufferID
-	glGenBuffers(1, &vertexBufferID);
-
-	// The following commands will talk about our 'vertexBufferID' buffer
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
-
-	// Pass our vertices into the GPU
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-
-	// Send our transformation to the currently
-	// bound shader, in the "MVP" uniform
-	glUniformMatrix4fv(pipelineMatrixID, 1, GL_FALSE, &pipelineMatrix[0][0]);
-
-	// Linking vertex attributes	
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
 }
 
 ///
@@ -191,26 +129,12 @@ void Engine::Update(Uint32 elapsedTime)
 
 	if (keystate[SDL_SCANCODE_RIGHT])
 	{
-		// Move
-		glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(elapsedTime * 0.01f, 0.f, 0.f));
-
-		// Apply the translate to the model matrix
-		modelMatrix *= translate;
-
-		// Update pipeline matrix
-		pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
+		geometryHandler.Move(elapsedTime, 1);
 	}
 
 	if (keystate[SDL_SCANCODE_LEFT])
 	{
-		// Move
-		glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(elapsedTime * -0.01f, 0.f, 0.f));
-
-		// Apply the translate to the model matrix
-		modelMatrix *= translate;
-
-		// Update pipeline matrix
-		pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
+		geometryHandler.Move(elapsedTime, -1);
 	}
 }
 
@@ -223,17 +147,8 @@ void Engine::Draw()
 	glClearColor(0.0, 0.0, 0.3, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Use our shader
-	glUseProgram(mainShaderProgramID);
-
-	// Use our previously defined VAO
-	glBindVertexArray(vertexArrayID);
-
-	// Send pipeline matrix to shader
-	glUniformMatrix4fv(pipelineMatrixID, 1, GL_FALSE, &pipelineMatrix[0][0]);
-
-	// Draw the triangle
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	// Draw 3d geometry
+	geometryHandler.Draw();
 
 	// Swap buffers
 	SDL_GL_SwapWindow(gameWindow);

@@ -8,23 +8,18 @@
 #include <SDL.h>
 #include <GL/gl.h>
 
-#include <glm/mat4x4.hpp> // glm::mat4
+#include <Geometry.h>
 
 class Engine
 {
 	private:
 		SDL_Window* gameWindow;
 		SDL_GLContext gameContext;
-		std::ofstream logFile;
-		Uint32 tickStart, tickEnd;
-
-		GLuint mainShaderProgramID, vertexArrayID, vertexBufferID, pipelineMatrixID;
-
-		glm::mat4 modelMatrix, viewMatrix, projectionMatrix, pipelineMatrix;
-
 		const unsigned char* keystate;
+		Uint32 tickStart, tickEnd;
+		std::ofstream logFile;
+		Geometry geometryHandler;
 
-		void SceneSetup();
 		void Update(Uint32 elapsedTime);
 		void Draw();
 
