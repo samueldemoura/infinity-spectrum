@@ -113,7 +113,11 @@ bool Engine::GameLoop()
 
 		// Run game logic & draw onto screen
 		Update(SDL_TICKS_PASSED(tickStart, tickEnd));
-		Draw();
+		if (Draw())
+		{
+			Log("HIT OBSTACLE");
+			keepRunning = 0;
+		}
 	}
 
 	Log("LOG: Exiting game loop");
@@ -149,17 +153,19 @@ void Engine::Update(Uint32 elapsedTime)
 ///
 /// OpenGL calls
 ///
-void Engine::Draw()
+int Engine::Draw()
 {
 	// Clear the screen
 	glClearColor(0.0, 0.0, 0.3, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Draw 3d geometry
-	geometryHandler.Draw();
+	int result = geometryHandler.Draw(SDL_TICKS_PASSED(tickStart, tickEnd));
 
 	// Swap buffers
 	SDL_GL_SwapWindow(gameWindow);
+
+	return result;
 }
 
 ///

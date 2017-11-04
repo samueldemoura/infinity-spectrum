@@ -21,7 +21,7 @@ class Engine
 		Geometry geometryHandler;
 
 		void Update(Uint32 elapsedTime);
-		void Draw();
+		int Draw();
 
 		// 0 - Main menu, 1 - Highscores, 2 - Options, 3 - Gameplay
 		unsigned short int gameStatus; 

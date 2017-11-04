@@ -2,9 +2,9 @@
 #define _GEOMETRY_H_
 
 #define MAX_GEOM 2
-#define MAX_SHADERS 2
+#define MAX_SHADERS 3
 
-#include <queue>
+#include <vector>
 
 #include <SDL.h>
 #include <GL/gl.h>
@@ -30,7 +30,7 @@ class Geometry
 		GLuint pipelineMatrixID[MAX_SHADERS];
 
 		// Level obstacles
-		std::queue<Obstacle> obstacles;
+		std::vector<Obstacle*> obstacles;
 		
 		// In degrees
 		double tunnelRotation;
@@ -39,7 +39,7 @@ class Geometry
 		void InitMatrixes();
 		void InitShaders();
 		void InitGeometry();
-		void Draw();
+		int Draw(Uint32 elapsedTime);
 
 		void Rotate(Uint32 elapsedTime, int dir);
 		void Move(Uint32 elapsedTime, int dir);

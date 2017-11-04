@@ -7,11 +7,14 @@ class Obstacle
 		// Constructor
 		Obstacle(bool side[6], unsigned int distance);
 
+		// Move
+		void Update(double speed);
+
 		// Which sides of the hexagon the obstacle occupies
 		bool side[6];
 
 		// How far away from the player it is
-		unsigned int distance;
+		double distance;
 };
 
 #endif
