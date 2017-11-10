@@ -11,6 +11,8 @@
 #include <Engine.h>
 #include <Geometry.h>
 
+#define SPEED_MULT 5
+
 ///
 /// Startup & shutdown
 ///
@@ -112,7 +114,7 @@ bool Engine::GameLoop()
 		}
 
 		// Run game logic & draw onto screen
-		Update(SDL_TICKS_PASSED(tickStart, tickEnd));
+		Update(SDL_TICKS_PASSED(tickStart, tickEnd) * SPEED_MULT);
 		if (Draw())
 		{
 			Log("HIT OBSTACLE");
@@ -160,7 +162,7 @@ int Engine::Draw()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Draw 3d geometry
-	int result = geometryHandler.Draw(SDL_TICKS_PASSED(tickStart, tickEnd));
+	int result = geometryHandler.Draw(SDL_TICKS_PASSED(tickStart, tickEnd) * SPEED_MULT);
 
 	// Swap buffers
 	SDL_GL_SwapWindow(gameWindow);
