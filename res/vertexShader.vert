@@ -1,14 +1,25 @@
 #version 330 core
 
-// Input vertex data, different for all executions of this shader.
-layout(location = 0) in vec3 vertexPosition;
+// https://www.tomdalling.com/blog/modern-opengl/06-diffuse-point-lighting/
 
-// Pipeline matrix stays constant for the whole mesh.
-uniform mat4 MVP;
+uniform mat4 camera;
+uniform mat4 model;
+
+in vec3 vert;
+in vec2 vertTexCoord;
+in vec3 vertNormal;
+
+out vec3 fragVert;
+out vec2 fragTexCoord;
+out vec3 fragNormal;
 
 void main()
 {
-	// Output position of the vertex, in clipping space = MVP * position
-	gl_Position =  MVP * vec4(vertexPosition, 1);
-	//gl_Position = vec4(vertexPosition, 1);
+    // Pass input variables into the shader
+    fragTexCoord = vertTexCoord;
+    fragNormal = vertNormal;
+    fragVert = vert;
+    
+    // Apply all matrix transformations to vert
+    gl_Position = camera * model * vec4(vert, 1);
 }

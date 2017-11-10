@@ -13,6 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <ShaderLoader.h>
+#include <TextureLoader.h>
 #include <Geometry.h>
 
 ///
@@ -40,21 +41,15 @@ void Geometry::InitShaders()
 {
 	// Compile shaders
 	shaderProgramID[0] = LoadShaders("res/vertexShader.vert", "res/fragmentShader.frag");
-
-	// Get a handle for the "MVP" uniform inside our shader
-	pipelineMatrixID[0] = glGetUniformLocation(shaderProgramID[0], "MVP");
-
-	// Compile shaders
 	shaderProgramID[1] = LoadShaders("res/vertexShader.vert", "res/fragmentShader2.frag");
-
-	// Get a handle for the "MVP" uniform inside our shader
-	pipelineMatrixID[1] = glGetUniformLocation(shaderProgramID[1], "MVP");
-
-	// Compile shaders
 	shaderProgramID[2] = LoadShaders("res/vertexShader.vert", "res/fragmentShader3.frag");
 
-	// Get a handle for the "MVP" uniform inside our shader
-	pipelineMatrixID[2] = glGetUniformLocation(shaderProgramID[2], "MVP");
+	// Get a handle for the uniforms inside our shaders
+	uniformID[0] = glGetUniformLocation(shaderProgramID[0], "camera");
+	uniformID[1] = glGetUniformLocation(shaderProgramID[0], "model");
+	uniformID[2] = glGetUniformLocation(shaderProgramID[0], "tex");
+	uniformID[3] = glGetUniformLocation(shaderProgramID[0], "light.position");
+	uniformID[4] = glGetUniformLocation(shaderProgramID[0], "light.rgb");
 }
 
 ///
@@ -62,6 +57,13 @@ void Geometry::InitShaders()
 ///
 void Geometry::InitGeometry()
 {
+	// Load textures
+	obstacleTexture = LoadTexture("res/obstacle.bmp");
+
+	// Setup global light
+	globalLight.position = glm::vec3(0.f, 0.f, 0.f);
+	globalLight.rgb = glm::vec3(1.f, 255.f, 0.f);
+
 	// Test obstacles
 	srand(time_t(NULL));
 	for (int i = 0; i < 100; ++i)
@@ -121,17 +123,57 @@ void Geometry::InitGeometry()
 
 	// Define vertices
 	static const GLfloat verticesCube[] = {
-		-1.0f, -1.0f, -1.0f, //0 back bottom left
-		-1.0f, 1.0f, -1.0f, //1 back top left
-		1.0f, -1.0f,-1.0f, //2 back bottom right
-		1.0f, 1.0f, -1.0f, //3 back top right
-		-1.0f, -1.0f, 1.0f, //4 front bottom left
-		-1.0f, 1.0f, 1.0f, //5 front top left
-		1.0f, -1.0f, 1.0f, //6 front bottom right
-		1.0f, 1.0f, 1.0f, //7 front top right
+		//  X     Y     Z       U     V          Normal
+		// bottom
+		-1.0f,-1.0f,-1.0f,   0.0f, 0.0f,   0.0f, -1.0f, 0.0f,
+		 1.0f,-1.0f,-1.0f,   1.0f, 0.0f,   0.0f, -1.0f, 0.0f,
+		-1.0f,-1.0f, 1.0f,   0.0f, 1.0f,   0.0f, -1.0f, 0.0f,
+		 1.0f,-1.0f,-1.0f,   1.0f, 0.0f,   0.0f, -1.0f, 0.0f,
+		 1.0f,-1.0f, 1.0f,   1.0f, 1.0f,   0.0f, -1.0f, 0.0f,
+		-1.0f,-1.0f, 1.0f,   0.0f, 1.0f,   0.0f, -1.0f, 0.0f,
+
+		// top
+		-1.0f, 1.0f,-1.0f,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f, 1.0f,   0.0f, 1.0f,   0.0f, 1.0f, 0.0f,
+		 1.0f, 1.0f,-1.0f,   1.0f, 0.0f,   0.0f, 1.0f, 0.0f,
+		 1.0f, 1.0f,-1.0f,   1.0f, 0.0f,   0.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f, 1.0f,   0.0f, 1.0f,   0.0f, 1.0f, 0.0f,
+		 1.0f, 1.0f, 1.0f,   1.0f, 1.0f,   0.0f, 1.0f, 0.0f,
+
+		// front
+		-1.0f,-1.0f, 1.0f,   1.0f, 0.0f,   0.0f, 0.0f, 1.0f,
+		 1.0f,-1.0f, 1.0f,   0.0f, 0.0f,   0.0f, 0.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,   1.0f, 1.0f,   0.0f, 0.0f, 1.0f,
+		 1.0f,-1.0f, 1.0f,   0.0f, 0.0f,   0.0f, 0.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f,   0.0f, 1.0f,   0.0f, 0.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,   1.0f, 1.0f,   0.0f, 0.0f, 1.0f,
+
+		// back
+		-1.0f,-1.0f,-1.0f,   0.0f, 0.0f,   0.0f, 0.0f, -1.0f,
+		-1.0f, 1.0f,-1.0f,   0.0f, 1.0f,   0.0f, 0.0f, -1.0f,
+		 1.0f,-1.0f,-1.0f,   1.0f, 0.0f,   0.0f, 0.0f, -1.0f,
+		 1.0f,-1.0f,-1.0f,   1.0f, 0.0f,   0.0f, 0.0f, -1.0f,
+		-1.0f, 1.0f,-1.0f,   0.0f, 1.0f,   0.0f, 0.0f, -1.0f,
+		 1.0f, 1.0f,-1.0f,   1.0f, 1.0f,   0.0f, 0.0f, -1.0f,
+
+		// left
+		-1.0f,-1.0f, 1.0f,   0.0f, 1.0f,   -1.0f, 0.0f, 0.0f,
+		-1.0f, 1.0f,-1.0f,   1.0f, 0.0f,   -1.0f, 0.0f, 0.0f,
+		-1.0f,-1.0f,-1.0f,   0.0f, 0.0f,   -1.0f, 0.0f, 0.0f,
+		-1.0f,-1.0f, 1.0f,   0.0f, 1.0f,   -1.0f, 0.0f, 0.0f,
+		-1.0f, 1.0f, 1.0f,   1.0f, 1.0f,   -1.0f, 0.0f, 0.0f,
+		-1.0f, 1.0f,-1.0f,   1.0f, 0.0f,   -1.0f, 0.0f, 0.0f,
+
+		// right
+		 1.0f,-1.0f, 1.0f,   1.0f, 1.0f,   1.0f, 0.0f, 0.0f,
+		 1.0f,-1.0f,-1.0f,   1.0f, 0.0f,   1.0f, 0.0f, 0.0f,
+		 1.0f, 1.0f,-1.0f,   0.0f, 0.0f,   1.0f, 0.0f, 0.0f,
+		 1.0f,-1.0f, 1.0f,   1.0f, 1.0f,   1.0f, 0.0f, 0.0f,
+		 1.0f, 1.0f,-1.0f,   0.0f, 0.0f,   1.0f, 0.0f, 0.0f,
+		 1.0f, 1.0f, 1.0f,   0.0f, 1.0f,   1.0f, 0.0f, 0.0f
 	};
 
-	static const GLint indicesCube[] = {
+	/*static const GLint indicesCube[] = {
 		0, 1, 3, //back
 		0, 2, 3, //back
 		0, 1, 5, //left
@@ -144,7 +186,7 @@ void Geometry::InitGeometry()
 		4, 6, 7, //front
 		0, 2, 6, //bottom
 		0, 4, 6, //bottom
-	};
+	};*/
 
 	// Create a vertex buffer object, bind it and pass vertices to it
 	glGenBuffers(1, &VBO[1]);
@@ -152,13 +194,28 @@ void Geometry::InitGeometry()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCube), verticesCube, GL_STATIC_DRAW);
 
 	// Create & fill element buffer
-	glGenBuffers(1, &EBO[1]);
+	/*glGenBuffers(1, &EBO[1]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesCube), indicesCube, GL_STATIC_DRAW); 
-
+*/
 	// Set vertex attribute pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	//glEnableVertexAttribArray(0);
+
+	int vert = glGetAttribLocation(shaderProgramID[2], "vert");
+	int vertTexCoord = glGetAttribLocation(shaderProgramID[2], "vertTexCoord");
+	int vertNormal = glGetAttribLocation(shaderProgramID[2], "vertNormal");
+	
+	//                           index  size      type  normalize             stride                   offset pointer
+	glEnableVertexAttribArray(vert);
+	glVertexAttribPointer(        vert,    3, GL_FLOAT,  GL_FALSE, 8*sizeof(GLfloat),                            NULL);
+	glEnableVertexAttribArray(vertTexCoord);
+	glVertexAttribPointer(vertTexCoord,    2, GL_FLOAT,   GL_TRUE, 8*sizeof(GLfloat), (GLvoid*)(3 * sizeof(GL_FLOAT)) );
+	glEnableVertexAttribArray(vertNormal);
+	glVertexAttribPointer(  vertNormal,    3, GL_FLOAT,   GL_TRUE, 8*sizeof(GLfloat), (GLvoid*)(5 * sizeof(GL_FLOAT)) );
+
+	// Unbind vertex array object
+	glBindVertexArray(0);
 }
 
 ///
@@ -167,13 +224,13 @@ void Geometry::InitGeometry()
 int Geometry::Draw(Uint32 elapsedTime)
 {
 	// Use first shader
-	glUseProgram(shaderProgramID[0]);
+	//glUseProgram(shaderProgramID[0]);
 
 	// Draw the tunnel
-	glBindVertexArray(VAO[0]);
+	//glBindVertexArray(VAO[0]);
 
 	// Draw all 6 faces individually
-	for (int i = 0; i < 6; ++i)
+	/*for (int i = 0; i < 6; ++i)
 	{
 		float j = (i * 60) + 30 - tunnelRotation;
 
@@ -186,11 +243,31 @@ int Geometry::Draw(Uint32 elapsedTime)
 		pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
 
 		glUseProgram(shaderProgramID[(i % 2 == 0)]);
-		glUniformMatrix4fv(pipelineMatrixID[(i % 2 == 0)], 1, GL_FALSE, &pipelineMatrix[0][0]);
+		//glUniformMatrix4fv(uniformID[(i % 2 == 0)], 1, GL_FALSE, &pipelineMatrix[0][0]);
+		// camera, model, tex, lightpos, lightrgb
+		glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &viewMatrix[0][0]);
+		glUniformMatrix4fv(uniformID[1], 1, GL_FALSE, &modelMatrix[0][0]);
+		glUniform1i(uniformID[2], 0);
+		glUniform3fv(uniformID[3], 3, &globalLight.position[0]);
+		glUniform3fv(uniformID[4], 3, &globalLight.rgb[0]);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	}
+	}*/
 
 	// TODO: iterate through obstacles and draw them here
+
+	float dx = cos ( tunnelRotation * (PI/180) );
+	float dy = sin ( tunnelRotation * (PI/180) );
+
+	globalLight.position = glm::vec3(dx, dy, 5.f);
+	globalLight.rgb = glm::vec3(1-(tunnelRotation/360), tunnelRotation/360, 1.f);
+
+	glUseProgram(shaderProgramID[2]);
+	glBindVertexArray(VAO[1]);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, obstacleTexture);
+	//glBindSampler(0, linearFiltering);
+
 	for (auto it = obstacles.begin(); it != obstacles.end(); ++it)
 	{
 		Obstacle *o = *it;
@@ -209,7 +286,7 @@ int Geometry::Draw(Uint32 elapsedTime)
 						std::cout << "\nWall Pos: " << i;
 						std::cout << "\nCalculated Pos: " << pos;
 						std::cout << '\n';
-						return 1;
+						//return 1;
 					}
 				}
 
@@ -223,17 +300,24 @@ int Geometry::Draw(Uint32 elapsedTime)
 				modelMatrix = glm::rotate(modelMatrix, (j + 90) * ((float)PI/180), glm::vec3(0.f, 0.f, 1.f));
 				modelMatrix = glm::scale(modelMatrix, glm::vec3(1.f, .7f, .3f));
 				
-				pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
+				//pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
+				pipelineMatrix = projectionMatrix * viewMatrix;
 
+				
 				glUseProgram(shaderProgramID[2]);
 				glBindVertexArray(VAO[1]);
-				glUniformMatrix4fv(pipelineMatrixID[2], 1, GL_FALSE, &pipelineMatrix[0][0]);
-				glDrawElements(GL_TRIANGLES, 6*6, GL_UNSIGNED_INT, 0);
+				glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
+				glUniformMatrix4fv(uniformID[1], 1, GL_FALSE, &modelMatrix[0][0]);
+				glUniform1i(uniformID[2], 0);
+				glUniform3fv(uniformID[3], 1, &globalLight.position[0]);
+				glUniform3fv(uniformID[4], 1, &globalLight.rgb[0]);
+				glDrawArrays(GL_TRIANGLES, 0, 6*6);
 			}
 		}
 
 		if (o->distance < -5)
 		{
+			// TODO: Fix blinking when obstacle goes past the camera
 			obstacles.erase(it);
 			delete o;
 		}

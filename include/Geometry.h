@@ -8,9 +8,15 @@
 
 #include <SDL.h>
 #include <GL/gl.h>
-#include <glm/mat4x4.hpp>
+#include <glm/glm.hpp>
 
 #include <Obstacle.h>
+
+struct Light
+{
+    glm::vec3 position;
+    glm::vec3 rgb;
+};
 
 class Geometry
 {
@@ -24,14 +30,19 @@ class Geometry
 		// Compiled shader program IDs
 		GLuint shaderProgramID[MAX_SHADERS];
 
-		// Holds reference for "MVP" uniform inside
-		// the vertex shader. Responsible
-		// for perspective distortion.
-		GLuint pipelineMatrixID[MAX_SHADERS];
+		// Holds reference for uniforms inside
+		// the vertex shader.
+		GLuint uniformID[MAX_SHADERS*5];
 
 		// Level obstacles
 		std::vector<Obstacle*> obstacles;
 		
+		// Global light
+		Light globalLight;
+
+		// Texutres
+		GLuint obstacleTexture;
+
 		// In degrees
 		double tunnelRotation;
 
