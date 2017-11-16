@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include <SDL.h>
+#include <SDL_mixer.h>
 #include <GL/glut.h>
 #include <GL/gl.h>
 
@@ -23,11 +24,38 @@ bool Engine::Initialize(int argc, char *argv[])
 	Log("--- LAUNCHING GAME ---");
 
 	// Initialize SDL
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
 	{
 		Log("ERROR: Failed to initialize SDL...");
 		Log(SDL_GetError());
 		return 0;
+	}
+
+	//Initialize SDL_mixer
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) < 0)
+	{
+		Log("SDL_mixer could not initialize! SDL_mixer Error:");
+		Log(Mix_GetError());
+		return 0;
+	}
+	
+	if (Mix_Init(MIX_INIT_MP3) != MIX_INIT_MP3)
+    {
+    	Log("SDL_mixer could not initialize! SDL_mixer Error:");
+		Log(Mix_GetError());
+		return 0;
+    }
+
+	//Load music 
+	gameMusic = Mix_LoadMUS("res/music.mp3");
+	if (gameMusic == nullptr) 
+	{ 
+		Log("Failed to load music. SDL_mixer Error: ");
+		Log(Mix_GetError());
+	}
+	else
+	{
+		Log("Loaded res/music.mp3");
 	}
 
 	/// OpenGL options & SDL window creation
@@ -64,6 +92,10 @@ bool Engine::Initialize(int argc, char *argv[])
 	Log("LOG: OpenGL window initialized");
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
+	// Play music
+	if (Mix_PlayMusic(gameMusic, -1) == -1)
+		Log(Mix_GetError());
+
 	return 1;
 }
 
@@ -73,6 +105,9 @@ void Engine::Shutdown()
 	logFile.close();
 
 	// Release resources
+	Mix_FreeMusic(gameMusic);
+	Mix_CloseAudio();
+	Mix_Quit();
 	SDL_GL_DeleteContext(gameContext);
 	SDL_DestroyWindow(gameWindow);
 	SDL_Quit();
@@ -103,6 +138,9 @@ bool Engine::GameLoop()
 			{
 				switch (event.key.keysym.sym)
 				{
+				case SDLK_w:
+					Mix_PlayMusic(gameMusic, -1);
+					break;
 				case SDLK_q:
 				case SDLK_ESCAPE:
 					keepRunning = 0;

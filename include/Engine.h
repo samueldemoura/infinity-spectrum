@@ -6,6 +6,7 @@
 #include <string>
 
 #include <SDL.h>
+#include <SDL_mixer.h>
 #include <GL/gl.h>
 
 #include <Geometry.h>
@@ -15,6 +16,7 @@ class Engine
 	private:
 		SDL_Window* gameWindow;
 		SDL_GLContext gameContext;
+		Mix_Music *gameMusic;
 		const unsigned char* keystate;
 		Uint32 tickStart, tickEnd;
 		std::ofstream logFile;
