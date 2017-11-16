@@ -11,7 +11,7 @@
 #include <Engine.h>
 #include <Geometry.h>
 
-#define SPEED_MULT 5
+#define SPEED_MULT 1 //5
 
 ///
 /// Startup & shutdown
@@ -38,7 +38,7 @@ bool Engine::Initialize(int argc, char *argv[])
 
 	gameWindow = SDL_CreateWindow("Infinity Spectrum", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL);
 	gameContext = SDL_GL_CreateContext(gameWindow);
-	gameStatus = 3;
+	gameState = 3;
 
 	if (!gameContext)
 	{

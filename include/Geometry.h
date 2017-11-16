@@ -2,7 +2,7 @@
 #define _GEOMETRY_H_
 
 #define MAX_GEOM 2
-#define MAX_SHADERS 3
+#define MAX_SHADERS 2
 
 #include <vector>
 
@@ -41,7 +41,7 @@ class Geometry
 		Light globalLight;
 
 		// Texutres
-		GLuint obstacleTexture;
+		GLuint tunnelTexture, obstacleTexture;
 
 		// In degrees
 		double tunnelRotation;

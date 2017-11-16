@@ -24,7 +24,7 @@ class Engine
 		int Draw();
 
 		// 0 - Main menu, 1 - Highscores, 2 - Options, 3 - Gameplay
-		unsigned short int gameStatus; 
+		unsigned short int gameState; 
 
 	public:
 		bool Initialize(int argc, char *argv[]);
