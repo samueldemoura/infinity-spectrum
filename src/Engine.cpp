@@ -92,11 +92,6 @@ bool Engine::Initialize(int argc, char *argv[])
 	Log("LOG: OpenGL window initialized");
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
-	// Play music
-	Mix_PlayMusic(gameMusic, -1);
-	if (Mix_PlayMusic(gameMusic, -1) == -1)
-		Log(Mix_GetError());
-
 	return 1;
 }
 
@@ -145,6 +140,8 @@ bool Engine::GameLoop()
 					{
 						gameState = 3;
 						geometryHandler.SetDifficulty(1);
+						if (Mix_PlayMusic(gameMusic, -1) == -1)
+							Log(Mix_GetError());
 					}
 					break;
 
@@ -153,6 +150,8 @@ bool Engine::GameLoop()
 					{
 						gameState = 3;
 						geometryHandler.SetDifficulty(2);
+						if (Mix_PlayMusic(gameMusic, -1) == -1)
+							Log(Mix_GetError());
 					}
 					break;
 
@@ -161,6 +160,8 @@ bool Engine::GameLoop()
 					{
 						gameState = 3;
 						geometryHandler.SetDifficulty(3);
+						if (Mix_PlayMusic(gameMusic, -1) == -1)
+							Log(Mix_GetError());
 					}
 					break;
 
@@ -169,10 +170,6 @@ bool Engine::GameLoop()
 				case SDLK_SPACE:
 					if (gameState == 1)
 						gameState = 0;
-					break;
-
-				case SDLK_w:
-					Mix_PlayMusic(gameMusic, -1);
 					break;
 
 				// Quit

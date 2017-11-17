@@ -232,13 +232,13 @@ void Geometry::GenerateObstacles(unsigned int number, unsigned int offset)
 		switch (difficulty)
 		{
 			case 1:
-				distance = ( (i+offset) * 11) + 10;
+				distance = ( (i+offset) * 11) + 20;
 				break;
 			case 2:
-				distance = ( (i+offset) * 16) + 20;
+				distance = ( (i+offset) * 16) + 30;
 				break;
 			case 3:
-				distance = ( (i+offset) * 22) + 30;
+				distance = ( (i+offset) * 28) + 40;
 				break;
 		}
 
@@ -479,10 +479,10 @@ void Geometry::SetDifficulty(unsigned short int d)
 			movementSpeed = 1;
 			break;
 		case 2:
-			movementSpeed = 1.5;
+			movementSpeed = 1.3;
 			break;
 		case 3:
-			movementSpeed = 2;
+			movementSpeed = 1.6;
 			break;
 	}
 
