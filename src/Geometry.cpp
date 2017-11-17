@@ -58,8 +58,8 @@ void Geometry::InitShaders()
 void Geometry::InitGeometry()
 {
 	// Load textures
-	menuTexture = LoadTexture("res/mainMenu.bmp");
-	gameOverTexture = LoadTexture("res/gameOver.bmp");
+	menuTexture = LoadTexture("res/mainMenu.jpg");
+	gameOverTexture = LoadTexture("res/gameOver.jpg");
 	tunnelTexture = LoadTexture("res/tunnel.bmp");
 	obstacleTexture = LoadTexture("res/obstacle.bmp");
 

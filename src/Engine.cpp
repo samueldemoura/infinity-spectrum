@@ -93,6 +93,7 @@ bool Engine::Initialize(int argc, char *argv[])
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
 	// Play music
+	Mix_PlayMusic(gameMusic, -1);
 	if (Mix_PlayMusic(gameMusic, -1) == -1)
 		Log(Mix_GetError());
 

@@ -9,7 +9,7 @@ GLuint LoadTexture(const char * bitmap_file)
     int width, height, nrChannels;
     unsigned char *data = stbi_load( bitmap_file, &width, &height, &nrChannels, 0);
 
-    if (width > 512)
+    if (nrChannels == 0)
     {
         fprintf(stderr, "%s: error loading bitmap file\n", bitmap_file);
         return -1;
