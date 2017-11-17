@@ -17,6 +17,8 @@ class Engine
 		SDL_Window* gameWindow;
 		SDL_GLContext gameContext;
 		Mix_Music *gameMusic;
+		Mix_Chunk *gameHit;
+		Mix_Chunk *gameSelect;
 		const unsigned char* keystate;
 		Uint32 tickStart, tickEnd;
 		std::ofstream logFile;
@@ -33,6 +35,7 @@ class Engine
 		void Shutdown();
 		bool GameLoop();
 		bool Log(std::string msg);
+		bool LoadMedia();
 };
 
 #endif // _ENGINE_H_
