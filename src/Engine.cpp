@@ -46,16 +46,14 @@ bool Engine::Initialize(int argc, char *argv[])
 		return 0;
     }
 
-	//Load music 
-	gameMusic = Mix_LoadMUS("res/music.mp3");
-	if (gameMusic == nullptr) 
-	{ 
-		Log("Failed to load music. SDL_mixer Error: ");
-		Log(Mix_GetError());
+	//Load media
+	if(LoadMedia())
+	{
+		Log("Media loaded successfully!");
 	}
 	else
 	{
-		Log("Loaded res/music.mp3");
+		Log("Failed to load media!");
 	}
 
 	/// OpenGL options & SDL window creation
@@ -101,9 +99,18 @@ void Engine::Shutdown()
 	logFile.close();
 
 	// Release resources
+	//Free sound effects
+	Mix_FreeChunk(gameHit);
+	Mix_FreeChunk(gameSelect);
+	gameHit = nullptr;
+	gameSelect = nullptr;
+
+	//Free music
 	Mix_FreeMusic(gameMusic);
+	gameMusic = nullptr;
 	Mix_CloseAudio();
 	Mix_Quit();
+
 	SDL_GL_DeleteContext(gameContext);
 	SDL_DestroyWindow(gameWindow);
 	SDL_Quit();
@@ -138,8 +145,13 @@ bool Engine::GameLoop()
 				case SDLK_1:
 					if (gameState == 0)
 					{
+						//Play select sound effect
+						Mix_PlayChannel(-1, gameSelect, 0);
 						gameState = 3;
 						geometryHandler.SetDifficulty(1);
+
+						//Play music
+						Mix_PlayMusic( gameMusic, -1 );
 						if (Mix_PlayMusic(gameMusic, -1) == -1)
 							Log(Mix_GetError());
 					}
@@ -148,8 +160,13 @@ bool Engine::GameLoop()
 				case SDLK_2:
 					if (gameState == 0)
 					{
+						//Play select sound effect
+						Mix_PlayChannel(-1, gameSelect, 0);
 						gameState = 3;
 						geometryHandler.SetDifficulty(2);
+
+						//Play music
+						Mix_PlayMusic( gameMusic, -1 );
 						if (Mix_PlayMusic(gameMusic, -1) == -1)
 							Log(Mix_GetError());
 					}
@@ -158,8 +175,13 @@ bool Engine::GameLoop()
 				case SDLK_3:
 					if (gameState == 0)
 					{
+						//Play select sound effect
+						Mix_PlayChannel(-1, gameSelect, 0);
 						gameState = 3;
 						geometryHandler.SetDifficulty(3);
+
+						//Play music
+						Mix_PlayMusic( gameMusic, -1 );
 						if (Mix_PlayMusic(gameMusic, -1) == -1)
 							Log(Mix_GetError());
 					}
@@ -187,7 +209,11 @@ bool Engine::GameLoop()
 		Update(SDL_TICKS_PASSED(tickStart, tickEnd) * SPEED_MULT);
 		if (Draw())
 		{
+			//Play sound effect when hitting an obstacle
+			Mix_PlayChannel(-1, gameHit, 0 );
 			gameState = 1;
+			//Stop Music
+			Mix_HaltMusic();	
 		}
 	}
 
@@ -252,3 +278,38 @@ bool Engine::Log(std::string msg)
 
 	return 1;
 }
+
+bool Engine::LoadMedia()
+{
+	//Loading success flag 
+	bool success = true; 
+
+	//Load music 
+	gameMusic = Mix_LoadMUS("res/music.mp3");
+	if (gameMusic == nullptr) 
+	{ 
+		Log("Failed to load music. SDL_mixer Error: ");
+		Log(Mix_GetError());
+		success = false;
+	}
+
+	//Load sound effects
+	gameHit = Mix_LoadWAV("res/hit.wav");
+	if (gameHit == nullptr)
+	{
+		Log("Failed to load hit obstacle sound effect. SDL_mixer Error: ");
+		Log(Mix_GetError());
+		success = false;
+	}
+
+	gameSelect = Mix_LoadWAV("res/select.wav");
+	if (gameSelect == nullptr)
+	{
+		Log("Failed to load select menu option sound effect. SDL_mixer Error: ");
+		Log(Mix_GetError());
+		success = false;
+	}
+
+	return success;
+}
+
