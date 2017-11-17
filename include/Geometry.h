@@ -40,14 +40,14 @@ class Geometry
 		// Global light
 		Light globalLight;
 
-		// Texutres
+		// Light effects
+		double hue, brightness;
+
+		// Textures
 		GLuint menuTexture, gameOverTexture, tunnelTexture, obstacleTexture;
 
 		// In degrees
 		double tunnelRotation;
-
-		// Hue color
-		double hue;
 
 		// Game difficulty
 		unsigned short int difficulty;
@@ -57,13 +57,12 @@ class Geometry
 		void InitMatrixes();
 		void InitShaders();
 		void InitGeometry();
-		void GenerateObstacles();
+		void GenerateObstacles(unsigned int number, unsigned int offset);
 		void Cleanup();
 		void SetDifficulty(unsigned short int d);
 		int Draw(Uint32 elapsedTime, unsigned short int gameState);
 
 		void Rotate(Uint32 elapsedTime, int dir);
-		void Move(Uint32 elapsedTime, int dir);
 
 		double GetRotation();
 };
