@@ -57,6 +57,9 @@ void Geometry::InitShaders()
 ///
 void Geometry::InitGeometry()
 {
+	// Generate random seed
+	srand(time_t(NULL));
+
 	// Load textures
 	menuTexture = LoadTexture("res/mainMenu.jpg");
 	gameOverTexture = LoadTexture("res/gameOver.jpg");
@@ -66,6 +69,7 @@ void Geometry::InitGeometry()
 	// Setup global light
 	globalLight.position = glm::vec3(0.f, 0.f, 0.f);
 	globalLight.rgb = glm::vec3(1.f, 255.f, 0.f);
+	brightness = 1;
 
 	//
 	// Element 0: 2d square on the floor
@@ -208,15 +212,14 @@ void SetArray(bool *array, bool a, bool b, bool c, bool d, bool e, bool f)
 ///
 /// Generates random obstacles
 ///
-void Geometry::GenerateObstacles()
+void Geometry::GenerateObstacles(unsigned int number, unsigned int offset)
 {
-	srand(time_t(NULL));
+	int type, lastType;
 
-	int lastType = 0;
-
-	for (int i = 0; i < 100; ++i)
+	for (unsigned int i = 0; i < number; ++i)
 	{
-		int type = rand() % 11;
+		lastType = type;
+		type = rand() % 11;
 
 		// Trick to make level seem slightly more random
 		if (type-3 == lastType || type == lastType || type+3 == lastType)
@@ -229,13 +232,13 @@ void Geometry::GenerateObstacles()
 		switch (difficulty)
 		{
 			case 1:
-				distance = (i * 11) + 10;
+				distance = ( (i+offset) * 11) + 20;
 				break;
 			case 2:
-				distance = (i * 16) + 20;
+				distance = ( (i+offset) * 16) + 30;
 				break;
 			case 3:
-				distance = (i * 21) + 30;
+				distance = ( (i+offset) * 28) + 40;
 				break;
 		}
 
@@ -280,8 +283,6 @@ void Geometry::GenerateObstacles()
 
 		Obstacle* obstacle = new Obstacle(obstacleArray, distance);
 		obstacles.push_back(obstacle);
-
-		lastType = type;
 	}
 }
 
@@ -304,8 +305,6 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(9.f, 9.f, 1.f));
 		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
-		//modelMatrix = glm::rotate(modelMatrix, 180 * ((float)PI/180), glm::vec3(0.f, 1.f, 0.f));
-
 		pipelineMatrix = projectionMatrix * viewMatrix;
 
 		glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
@@ -330,8 +329,6 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(9.f, 9.f, 1.f));
 		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
-		//modelMatrix = glm::rotate(modelMatrix, 180 * ((float)PI/180), glm::vec3(0.f, 1.f, 0.f));
-
 		pipelineMatrix = projectionMatrix * viewMatrix;
 
 		glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
@@ -351,9 +348,8 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		if (hue > 255)
 			hue = 0;
 
-		// Place light in tunnel
-		float dx = cos ( tunnelRotation * (PI/180) );
-		float dy = sin ( tunnelRotation * (PI/180) );
+		if (brightness > 1)
+			brightness -= elapsedTime * 0.04;
 
 		HsvColor hsv;
 		hsv.h = hue;
@@ -363,8 +359,11 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		RgbColor rgb;
 		rgb = HsvToRgb(hsv);
 
+		// Place light in tunnel
+		float dx = cos ( tunnelRotation * (PI/180) );
+		float dy = sin ( tunnelRotation * (PI/180) );
 		globalLight.position = glm::vec3(dx, dy, 3.f);
-		globalLight.rgb = glm::vec3(rgb.r / (float)255, rgb.g / (float)255, rgb.b / (float)255);
+		globalLight.rgb = glm::vec3(brightness * rgb.r / (float)255, brightness * rgb.g / (float)255, brightness * rgb.b / (float)255);
 
 		// Draw the tunnel
 		glUseProgram(shaderProgramID[0]);
@@ -403,11 +402,15 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		for (auto it = obstacles.begin(); it != obstacles.end(); ++it)
 		{
 			Obstacle *o = *it;
-			o->Update(elapsedTime * 0.05 * (difficulty * 0.7) );
+			o->Update(elapsedTime * 0.05 * (difficulty * 0.6) );
 
+			// Obstacle is past camera. Generate new obstacles,
+			// do blinking light effect and delete obstacle
 			if (o->distance < -5)
 			{
-				// TODO: Fix blinking when obstacle goes past the camera
+				GenerateObstacles(1, 49);
+				brightness = 10;
+
 				obstacles.erase(it);
 				delete o;
 				continue;
@@ -417,6 +420,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 			{
 				if (o->side[i])
 				{
+					// Collision detection
 					if (o->distance < -4)
 					{
 						int pos = ((((int)tunnelRotation + 30) / 60) - 0) % 6;
@@ -431,6 +435,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 						}
 					}
 
+					// Drawing
 					float j = (i * 60) + 30 + (-tunnelRotation) - (60*2);
 
 					float dx = 1.70 * cos( j * (PI/180) );
@@ -440,7 +445,6 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 					modelMatrix = glm::translate(modelMatrix, glm::vec3(dx, dy, (o->distance) * -1.0) );
 					modelMatrix = glm::rotate(modelMatrix, (j + 90) * ((float)PI/180), glm::vec3(0.f, 0.f, 1.f));
 					modelMatrix = glm::scale(modelMatrix, glm::vec3(1.f, .7f, .3f));
-					
 					pipelineMatrix = projectionMatrix * viewMatrix;
 
 					glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
@@ -475,15 +479,15 @@ void Geometry::SetDifficulty(unsigned short int d)
 			movementSpeed = 1;
 			break;
 		case 2:
-			movementSpeed = 1.5;
+			movementSpeed = 1.3;
 			break;
 		case 3:
-			movementSpeed = 2;
+			movementSpeed = 1.6;
 			break;
 	}
 
 	Cleanup();
-	GenerateObstacles();
+	GenerateObstacles(50, 0);
 }
 
 ///
@@ -495,7 +499,7 @@ void Geometry::Cleanup()
 }
 
 ///
-/// For testing
+/// Player movement
 ///
 void Geometry::Rotate(Uint32 elapsedTime, int dir)
 {
@@ -507,16 +511,4 @@ void Geometry::Rotate(Uint32 elapsedTime, int dir)
 
 	if (tunnelRotation < 0)
 		tunnelRotation += 360;
-}
-
-void Geometry::Move(Uint32 elapsedTime, int dir)
-{
-	// Move
-	glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(elapsedTime * 0.01f * -dir, 0.f, 0.f));
-
-	// Apply the translate to the matrix
-	viewMatrix *= translate;
-
-	// Update pipeline matrix
-	pipelineMatrix = projectionMatrix * viewMatrix * modelMatrix;
 }

@@ -149,9 +149,11 @@ bool Engine::GameLoop()
 						Mix_PlayChannel(-1, gameSelect, 0);
 						gameState = 3;
 						geometryHandler.SetDifficulty(1);
-						
+
 						//Play music
 						Mix_PlayMusic( gameMusic, -1 );
+						if (Mix_PlayMusic(gameMusic, -1) == -1)
+							Log(Mix_GetError());
 					}
 					break;
 
@@ -165,6 +167,8 @@ bool Engine::GameLoop()
 
 						//Play music
 						Mix_PlayMusic( gameMusic, -1 );
+						if (Mix_PlayMusic(gameMusic, -1) == -1)
+							Log(Mix_GetError());
 					}
 					break;
 
@@ -178,6 +182,8 @@ bool Engine::GameLoop()
 
 						//Play music
 						Mix_PlayMusic( gameMusic, -1 );
+						if (Mix_PlayMusic(gameMusic, -1) == -1)
+							Log(Mix_GetError());
 					}
 					break;
 
@@ -186,10 +192,6 @@ bool Engine::GameLoop()
 				case SDLK_SPACE:
 					if (gameState == 1)
 						gameState = 0;
-					break;
-
-				case SDLK_w:
-					Mix_PlayMusic(gameMusic, -1);
 					break;
 
 				// Quit
