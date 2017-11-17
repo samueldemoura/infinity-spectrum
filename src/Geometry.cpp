@@ -25,8 +25,8 @@ void Geometry::InitMatrixes()
 	// Projection matrix : 90° Field of View, 16:9 aspect ratio, display range: 0.1 unit <-> 100 units
 	projectionMatrix = glm::perspective(glm::radians(90.0f), 16.0f/9.0f, 0.1f, 100.0f);
 
-	// View matrix: camera at (2,2,5) looks at (0,0,0), Y is up (0, 1, 0)
-	viewMatrix = glm::lookAt(glm::vec3(0, -1.5, 5), glm::vec3(0, -1.5, 0), glm::vec3(0, 1, 0));
+	// View matrix: camera at (0,-1.5,5) looks at (0,-1.5,0), Y is up (0, 1, 0)
+	viewMatrix = glm::lookAt(glm::vec3(0, -1.62, 5), glm::vec3(0, -1.5, 0), glm::vec3(0, 1, 0));
 
 	// Model matrix: identity matrix
 	modelMatrix = glm::mat4(1.0f);
@@ -232,13 +232,13 @@ void Geometry::GenerateObstacles(unsigned int number, unsigned int offset)
 		switch (difficulty)
 		{
 			case 1:
-				distance = ( (i+offset) * 11) + 20;
+				distance = ( (i+offset) * 11) + 16;
 				break;
 			case 2:
-				distance = ( (i+offset) * 16) + 30;
+				distance = ( (i+offset) * 16) + 40;
 				break;
 			case 3:
-				distance = ( (i+offset) * 28) + 40;
+				distance = ( (i+offset) * 28) + 58;
 				break;
 		}
 
@@ -406,7 +406,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 
 			// Obstacle is past camera. Generate new obstacles,
 			// do blinking light effect and delete obstacle
-			if (o->distance < -5)
+			if (o->distance < -5.5)
 			{
 				GenerateObstacles(1, 49);
 				brightness = 10;
@@ -421,7 +421,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 				if (o->side[i])
 				{
 					// Collision detection
-					if (o->distance < -4)
+					if (o->distance < -4.5)
 					{
 						int pos = ((((int)tunnelRotation + 30) / 60) - 0) % 6;
 						if ( pos == i )
