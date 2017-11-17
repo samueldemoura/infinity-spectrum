@@ -66,7 +66,7 @@ bool Engine::Initialize(int argc, char *argv[])
 
 	gameWindow = SDL_CreateWindow("Infinity Spectrum", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL);
 	gameContext = SDL_GL_CreateContext(gameWindow);
-	gameState = 3;
+	gameState = 0;
 
 	if (!gameContext)
 	{
@@ -121,12 +121,12 @@ bool Engine::GameLoop()
 	Log("LOG: Entering game loop");
 	SDL_Event event;
 	bool keepRunning = 1;
-	tickStart = SDL_GetTicks();
+	tickStart = glutGet(GLUT_ELAPSED_TIME); //SDL_GetTicks();
 
 	while (keepRunning)
 	{
 		tickEnd = tickStart;
-		tickStart = SDL_GetTicks();
+		tickStart = glutGet(GLUT_ELAPSED_TIME); //SDL_GetTicks();
 		while (SDL_PollEvent(&event))
 		{
 			// Exit game loop
@@ -138,9 +138,43 @@ bool Engine::GameLoop()
 			{
 				switch (event.key.keysym.sym)
 				{
+				// Difficulty select
+				case SDLK_1:
+					if (gameState == 0)
+					{
+						gameState = 3;
+						geometryHandler.SetDifficulty(1);
+					}
+					break;
+
+				case SDLK_2:
+					if (gameState == 0)
+					{
+						gameState = 3;
+						geometryHandler.SetDifficulty(2);
+					}
+					break;
+
+				case SDLK_3:
+					if (gameState == 0)
+					{
+						gameState = 3;
+						geometryHandler.SetDifficulty(3);
+					}
+					break;
+
+				// Game over screen
+				case SDLK_RETURN:
+				case SDLK_SPACE:
+					if (gameState == 1)
+						gameState = 0;
+					break;
+
 				case SDLK_w:
 					Mix_PlayMusic(gameMusic, -1);
 					break;
+
+				// Quit
 				case SDLK_q:
 				case SDLK_ESCAPE:
 					keepRunning = 0;
@@ -155,8 +189,7 @@ bool Engine::GameLoop()
 		Update(SDL_TICKS_PASSED(tickStart, tickEnd) * SPEED_MULT);
 		if (Draw())
 		{
-			Log("HIT OBSTACLE");
-			keepRunning = 0;
+			gameState = 1;
 		}
 	}
 
@@ -179,7 +212,7 @@ void Engine::Update(Uint32 elapsedTime)
 		geometryHandler.Rotate(elapsedTime, -1);
 	}
 
-	if (keystate[SDL_SCANCODE_UP])
+	/*if (keystate[SDL_SCANCODE_UP])
 	{
 		geometryHandler.Move(elapsedTime, 1);
 	}
@@ -187,7 +220,7 @@ void Engine::Update(Uint32 elapsedTime)
 	if (keystate[SDL_SCANCODE_DOWN])
 	{
 		geometryHandler.Move(elapsedTime, -1);
-	}
+	}*/
 }
 
 ///
@@ -200,7 +233,7 @@ int Engine::Draw()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Draw 3d geometry
-	int result = geometryHandler.Draw(SDL_TICKS_PASSED(tickStart, tickEnd) * SPEED_MULT);
+	int result = geometryHandler.Draw(SDL_TICKS_PASSED(tickStart, tickEnd) * SPEED_MULT, gameState);
 
 	// Swap buffers
 	SDL_GL_SwapWindow(gameWindow);

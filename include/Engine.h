@@ -25,8 +25,8 @@ class Engine
 		void Update(Uint32 elapsedTime);
 		int Draw();
 
-		// 0 - Main menu, 1 - Highscores, 2 - Options, 3 - Gameplay
-		unsigned short int gameState; 
+		// 0 - Main menu, 1 - Game over, 2 - Options, 3 - Gameplay
+		unsigned short int gameState;
 
 	public:
 		bool Initialize(int argc, char *argv[]);

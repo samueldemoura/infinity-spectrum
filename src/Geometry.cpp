@@ -15,6 +15,7 @@
 #include <ShaderLoader.h>
 #include <TextureLoader.h>
 #include <Geometry.h>
+#include <Color.h>
 
 ///
 /// Matrixes
@@ -57,22 +58,14 @@ void Geometry::InitShaders()
 void Geometry::InitGeometry()
 {
 	// Load textures
+	menuTexture = LoadTexture("res/mainMenu.bmp");
+	gameOverTexture = LoadTexture("res/gameOver.bmp");
 	tunnelTexture = LoadTexture("res/tunnel.bmp");
 	obstacleTexture = LoadTexture("res/obstacle.bmp");
 
 	// Setup global light
 	globalLight.position = glm::vec3(0.f, 0.f, 0.f);
 	globalLight.rgb = glm::vec3(1.f, 255.f, 0.f);
-
-	// Test obstacles
-	srand(time_t(NULL));
-	for (int i = 0; i < 100; ++i)
-	{
-		//bool obstacleArray[6] = {0, 0, 1, 0, 0, 0};
-		bool obstacleArray[6] = {rand() % 3, rand() % 2, rand() % 4, rand() % 2, rand() % 3, rand() % 2};
-		Obstacle* obstacleTest = new Obstacle(obstacleArray, (i * 13) + 50);
-		obstacles.push_back(obstacleTest);
-	}
 
 	//
 	// Element 0: 2d square on the floor
@@ -201,35 +194,117 @@ void Geometry::InitGeometry()
 	glBindVertexArray(0);
 }
 
+// Helper function
+void SetArray(bool *array, bool a, bool b, bool c, bool d, bool e, bool f)
+{
+	array[0] = a;
+	array[1] = b;
+	array[2] = c;
+	array[3] = d;
+	array[4] = e;
+	array[5] = f;
+}
+
+///
+/// Generates random obstacles
+///
+void Geometry::GenerateObstacles()
+{
+	srand(time_t(NULL));
+
+	int lastType = 0;
+
+	for (int i = 0; i < 100; ++i)
+	{
+		int type = rand() % 11;
+
+		// Trick to make level seem slightly more random
+		if (type-3 == lastType || type == lastType || type+3 == lastType)
+		{
+			type = (type + 1) % 11;
+		}
+
+		int distance;
+
+		switch (difficulty)
+		{
+			case 1:
+				distance = (i * 11) + 10;
+				break;
+			case 2:
+				distance = (i * 16) + 20;
+				break;
+			case 3:
+				distance = (i * 21) + 30;
+				break;
+		}
+
+		bool obstacleArray[6];
+
+		switch (type)
+		{
+			case 0:
+				SetArray(&obstacleArray[0], 1,1,1,1,1,0);
+				break;
+			case 1:
+				SetArray(&obstacleArray[0], 1,1,1,1,0,1);
+				break;
+			case 2:
+				SetArray(&obstacleArray[0], 1,1,1,0,1,1);
+				break;
+			case 3:
+				SetArray(&obstacleArray[0], 1,1,0,1,1,1);
+				break;
+			case 4:
+				SetArray(&obstacleArray[0], 1,0,1,1,1,1);
+				break;
+			case 5:
+				SetArray(&obstacleArray[0], 0,1,1,1,1,1);
+				break;
+			case 6:
+				SetArray(&obstacleArray[0], 1,0,1,0,1,0);
+				break;
+			case 7:
+				SetArray(&obstacleArray[0], 0,1,0,1,0,1);
+				break;
+			case 8:
+				SetArray(&obstacleArray[0], 1,0,1,1,1,0);
+				break;
+			case 9:
+				SetArray(&obstacleArray[0], 0,1,1,1,0,1);
+				break;
+			case 10:
+				SetArray(&obstacleArray[0], 1,1,1,0,1,0);
+				break;
+		}
+
+		Obstacle* obstacle = new Obstacle(obstacleArray, distance);
+		obstacles.push_back(obstacle);
+
+		lastType = type;
+	}
+}
+
 ///
 /// Called every frame
 ///
-int Geometry::Draw(Uint32 elapsedTime)
+int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 {
-	// Place light in tunnel
-	float dx = cos ( tunnelRotation * (PI/180) );
-	float dy = sin ( tunnelRotation * (PI/180) );
-
-	globalLight.position = glm::vec3(dx, dy, 3.f);
-	globalLight.rgb = glm::vec3(1-(tunnelRotation/360), tunnelRotation/360, 1.f);
-
-	// Draw the tunnel
-	glUseProgram(shaderProgramID[0]);
-	glBindVertexArray(VAO[0]);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tunnelTexture);
-
-	// Draw all 6 faces individually
-	for (int i = 0; i < 6; ++i)
+	// Draw main menu
+	if (gameState == 0)
 	{
-		float j = (i * 60) + 30 - tunnelRotation;
+		// Ignore lighting
+		glUseProgram(shaderProgramID[1]);
 
-		float dx = 1.73 * cos( j * (PI/180) );
-		float dy = 1.73 * sin( j * (PI/180) );
+		// Use 2d square VAO to draw menu texture
+		glBindVertexArray(VAO[0]);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, menuTexture);
 
-		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(dx, dy, 0.0f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(1.f, 1.f, 100.f));
-		modelMatrix = glm::rotate(modelMatrix, (j + 90) * ((float)PI/180), glm::vec3(0.f, 0.f, 1.f));
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		modelMatrix = glm::scale(modelMatrix, glm::vec3(9.f, 9.f, 1.f));
+		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
+		//modelMatrix = glm::rotate(modelMatrix, 180 * ((float)PI/180), glm::vec3(0.f, 1.f, 0.f));
 
 		pipelineMatrix = projectionMatrix * viewMatrix;
 
@@ -241,62 +316,140 @@ int Geometry::Draw(Uint32 elapsedTime)
 		glDrawElements(GL_TRIANGLES, 6*6, GL_UNSIGNED_INT, 0);
 	}
 
-	// Draw the obstacles
-	glUseProgram(shaderProgramID[1]);
-	glBindVertexArray(VAO[1]);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, obstacleTexture);
-
-	for (auto it = obstacles.begin(); it != obstacles.end(); ++it)
+	// Draw the game over screen
+	else if (gameState == 1)
 	{
-		Obstacle *o = *it;
-		o->Update(elapsedTime * 0.05);
+		// Ignore lighting
+		glUseProgram(shaderProgramID[1]);
 
-		if (o->distance < -5)
-		{
-			// TODO: Fix blinking when obstacle goes past the camera
-			// TODO: Increment score
-			obstacles.erase(it);
-			delete o;
-			continue;
-		}
+		// Use 2d square VAO to draw menu texture
+		glBindVertexArray(VAO[0]);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, gameOverTexture);
 
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		modelMatrix = glm::scale(modelMatrix, glm::vec3(9.f, 9.f, 1.f));
+		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
+		//modelMatrix = glm::rotate(modelMatrix, 180 * ((float)PI/180), glm::vec3(0.f, 1.f, 0.f));
+
+		pipelineMatrix = projectionMatrix * viewMatrix;
+
+		glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
+		glUniformMatrix4fv(uniformID[1], 1, GL_FALSE, &modelMatrix[0][0]);
+		glUniform1i(uniformID[2], 0);
+		glUniform3fv(uniformID[3], 1, &globalLight.position[0]);
+		glUniform3fv(uniformID[4], 1, &globalLight.rgb[0]);
+		glDrawElements(GL_TRIANGLES, 6*6, GL_UNSIGNED_INT, 0);
+	}
+
+	// Draw the game itself
+	else if (gameState == 3)
+	{
+		// Update color
+		hue = (hue + (elapsedTime*0.1) );
+
+		if (hue > 255)
+			hue = 0;
+
+		// Place light in tunnel
+		float dx = cos ( tunnelRotation * (PI/180) );
+		float dy = sin ( tunnelRotation * (PI/180) );
+
+		HsvColor hsv;
+		hsv.h = hue;
+		hsv.s = 255;
+		hsv.v = 255;
+
+		RgbColor rgb;
+		rgb = HsvToRgb(hsv);
+
+		globalLight.position = glm::vec3(dx, dy, 3.f);
+		globalLight.rgb = glm::vec3(rgb.r / (float)255, rgb.g / (float)255, rgb.b / (float)255);
+
+		// Draw the tunnel
+		glUseProgram(shaderProgramID[0]);
+		glBindVertexArray(VAO[0]);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tunnelTexture);
+
+		// Draw all 6 faces individually
 		for (int i = 0; i < 6; ++i)
 		{
-			if (o->side[i])
+			float j = (i * 60) + 30 - tunnelRotation;
+
+			float dx = 1.73 * cos( j * (PI/180) );
+			float dy = 1.73 * sin( j * (PI/180) );
+
+			modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(dx, dy, 0.0f));
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(1.f, 1.f, 100.f));
+			modelMatrix = glm::rotate(modelMatrix, (j + 90) * ((float)PI/180), glm::vec3(0.f, 0.f, 1.f));
+
+			pipelineMatrix = projectionMatrix * viewMatrix;
+
+			glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
+			glUniformMatrix4fv(uniformID[1], 1, GL_FALSE, &modelMatrix[0][0]);
+			glUniform1i(uniformID[2], 0);
+			glUniform3fv(uniformID[3], 1, &globalLight.position[0]);
+			glUniform3fv(uniformID[4], 1, &globalLight.rgb[0]);
+			glDrawElements(GL_TRIANGLES, 6*6, GL_UNSIGNED_INT, 0);
+		}
+
+		// Draw the obstacles
+		glUseProgram(shaderProgramID[0]);
+		glBindVertexArray(VAO[1]);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, obstacleTexture);
+
+		for (auto it = obstacles.begin(); it != obstacles.end(); ++it)
+		{
+			Obstacle *o = *it;
+			o->Update(elapsedTime * 0.05 * (difficulty * 0.7) );
+
+			if (o->distance < -5)
 			{
-				if (o->distance < -5)
+				// TODO: Fix blinking when obstacle goes past the camera
+				obstacles.erase(it);
+				delete o;
+				continue;
+			}
+
+			for (int i = 0; i < 6; ++i)
+			{
+				if (o->side[i])
 				{
-					int pos = ((((int)tunnelRotation + 30) / 60) - 0) % 6;
-					if ( pos == i )
+					if (o->distance < -4)
 					{
-						std::cout << "\nAngle: " << tunnelRotation;
-						std::cout << "\nWall Pos: " << i;
-						std::cout << "\nCalculated Pos: " << pos;
-						std::cout << '\n';
+						int pos = ((((int)tunnelRotation + 30) / 60) - 0) % 6;
+						if ( pos == i )
+						{
+							std::cout << "\nAngle: " << tunnelRotation;
+							std::cout << "\nWall Pos: " << i;
+							std::cout << "\nCalculated Pos: " << pos;
+							std::cout << '\n';
 
-						// TODO: Game over screen
+							return 1;
+						}
 					}
+
+					float j = (i * 60) + 30 + (-tunnelRotation) - (60*2);
+
+					float dx = 1.70 * cos( j * (PI/180) );
+					float dy = 1.70 * sin( j * (PI/180) );
+
+					modelMatrix = glm::mat4(1.0f);
+					modelMatrix = glm::translate(modelMatrix, glm::vec3(dx, dy, (o->distance) * -1.0) );
+					modelMatrix = glm::rotate(modelMatrix, (j + 90) * ((float)PI/180), glm::vec3(0.f, 0.f, 1.f));
+					modelMatrix = glm::scale(modelMatrix, glm::vec3(1.f, .7f, .3f));
+					
+					pipelineMatrix = projectionMatrix * viewMatrix;
+
+					glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
+					glUniformMatrix4fv(uniformID[1], 1, GL_FALSE, &modelMatrix[0][0]);
+					glUniform1i(uniformID[2], 0);
+					glUniform3fv(uniformID[3], 1, &globalLight.position[0]);
+					glUniform3fv(uniformID[4], 1, &globalLight.rgb[0]);
+					glDrawArrays(GL_TRIANGLES, 0, 6*6);
 				}
-
-				float j = (i * 60) + 30 + (-tunnelRotation) - (60*2);
-
-				float dx = 1.70 * cos( j * (PI/180) );
-				float dy = 1.70 * sin( j * (PI/180) );
-
-				modelMatrix = glm::mat4(1.0f);
-				modelMatrix = glm::translate(modelMatrix, glm::vec3(dx, dy, (o->distance) * -1.0) );
-				modelMatrix = glm::rotate(modelMatrix, (j + 90) * ((float)PI/180), glm::vec3(0.f, 0.f, 1.f));
-				modelMatrix = glm::scale(modelMatrix, glm::vec3(1.f, .7f, .3f));
-				
-				pipelineMatrix = projectionMatrix * viewMatrix;
-
-				glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
-				glUniformMatrix4fv(uniformID[1], 1, GL_FALSE, &modelMatrix[0][0]);
-				glUniform1i(uniformID[2], 0);
-				glUniform3fv(uniformID[3], 1, &globalLight.position[0]);
-				glUniform3fv(uniformID[4], 1, &globalLight.rgb[0]);
-				glDrawArrays(GL_TRIANGLES, 0, 6*6);
 			}
 		}
 	}
@@ -310,12 +463,44 @@ double Geometry::GetRotation()
 }
 
 ///
+/// Called every time the game starts
+///
+void Geometry::SetDifficulty(unsigned short int d)
+{
+	difficulty = d;
+
+	switch (d)
+	{
+		case 1:
+			movementSpeed = 1;
+			break;
+		case 2:
+			movementSpeed = 1.5;
+			break;
+		case 3:
+			movementSpeed = 2;
+			break;
+	}
+
+	Cleanup();
+	GenerateObstacles();
+}
+
+///
+/// Called every time the game ends
+///
+void Geometry::Cleanup()
+{
+	obstacles.clear();
+}
+
+///
 /// For testing
 ///
 void Geometry::Rotate(Uint32 elapsedTime, int dir)
 {
 	// Move
-	tunnelRotation += ((elapsedTime * 0.5f) * dir);
+	tunnelRotation += ((elapsedTime * 0.5f) * dir) * movementSpeed;
 	
 	if (tunnelRotation > 360)
 		tunnelRotation -= 360;
