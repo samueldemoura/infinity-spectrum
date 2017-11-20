@@ -53,13 +53,20 @@ class Geometry
 		unsigned short int difficulty;
 		double movementSpeed;
 
+		// Score
+		unsigned int score;
+		unsigned int highscores[5];
+
 	public:
 		void InitMatrixes();
 		void InitShaders();
 		void InitGeometry();
+		void InitFonts();
 		void GenerateObstacles(unsigned int number, unsigned int offset);
 		void Cleanup();
 		void SetDifficulty(unsigned short int d);
+		void SaveHighscore(unsigned int s);
+		void ReadHighscore();
 		int Draw(Uint32 elapsedTime, unsigned short int gameState);
 
 		void Rotate(Uint32 elapsedTime, int dir);

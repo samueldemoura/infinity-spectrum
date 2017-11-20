@@ -5,12 +5,16 @@
 #include <math.h> // pow
 #include <stdlib.h> // rand
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <fstream>
 
 #include <SDL.h>
 #include <GL/glut.h>
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <gltext.h>
 
 #include <ShaderLoader.h>
 #include <TextureLoader.h>
@@ -198,6 +202,16 @@ void Geometry::InitGeometry()
 	glBindVertexArray(0);
 }
 
+///
+/// Loads fonts
+///
+void Geometry::InitFonts()
+{
+	gltInit();
+	ReadHighscore();
+}
+
+
 // Helper function
 void SetArray(bool *array, bool a, bool b, bool c, bool d, bool e, bool f)
 {
@@ -302,7 +316,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, menuTexture);
 
-		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(9.f, 9.f, 1.f));
 		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
 		pipelineMatrix = projectionMatrix * viewMatrix;
@@ -313,6 +327,17 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		glUniform3fv(uniformID[3], 1, &globalLight.position[0]);
 		glUniform3fv(uniformID[4], 1, &globalLight.rgb[0]);
 		glDrawElements(GL_TRIANGLES, 6*6, GL_UNSIGNED_INT, 0);
+
+		// beautiful work of art, please do not judge
+		std::stringstream highscoreText;
+		for (int i = 0; i < 5; ++i)
+		{
+			highscoreText << "Highscore #" << i+1 << ": " << highscores[i] << '\n';
+		}
+		GLTtext *text = gltCreateText();
+		gltSetText(text, highscoreText.str().c_str());
+		gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+		gltDrawText2D(text, 0, 0, 1);
 	}
 
 	// Draw the game over screen
@@ -326,7 +351,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, gameOverTexture);
 
-		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(9.f, 9.f, 1.f));
 		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
 		pipelineMatrix = projectionMatrix * viewMatrix;
@@ -410,6 +435,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 			{
 				GenerateObstacles(1, 49);
 				brightness = 10;
+				score += 100 * movementSpeed;
 
 				obstacles.erase(it);
 				delete o;
@@ -430,6 +456,9 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 							std::cout << "\nWall Pos: " << i;
 							std::cout << "\nCalculated Pos: " << pos;
 							std::cout << '\n';
+
+							SaveHighscore(score);
+							ReadHighscore();
 
 							return 1;
 						}
@@ -456,6 +485,26 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 				}
 			}
 		}
+
+		// beautiful work of art, please do not judge
+		std::stringstream scoreText;
+		switch (difficulty)
+		{
+			case 1:
+				scoreText << "Difficulty: Easy";
+				break;
+			case 2:
+				scoreText << "Difficulty: Medium";
+				break;
+			case 3:
+				scoreText << "Difficulty: Hard";
+				break;
+		}
+		scoreText << "\nScore: " << score;
+		GLTtext *text = gltCreateText();
+		gltSetText(text, scoreText.str().c_str());
+		gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+		gltDrawText2D(text, 0, 0, 1);
 	}
 
 	return 0;
@@ -472,6 +521,7 @@ double Geometry::GetRotation()
 void Geometry::SetDifficulty(unsigned short int d)
 {
 	difficulty = d;
+	score = 0;
 
 	switch (d)
 	{
@@ -496,6 +546,70 @@ void Geometry::SetDifficulty(unsigned short int d)
 void Geometry::Cleanup()
 {
 	obstacles.clear();
+}
+
+///
+/// Score
+///
+void Geometry::ReadHighscore()
+{
+	// Read all highscores
+	std::ifstream ifFile;
+	ifFile.open("highscores.txt");
+	std::string line;
+
+	getline(ifFile, line);
+	highscores[0] = std::stoi(line);
+	getline(ifFile, line);
+	highscores[1] = std::stoi(line);
+	getline(ifFile, line);
+	highscores[2] = std::stoi(line);
+	getline(ifFile, line);
+	highscores[3] = std::stoi(line);
+	getline(ifFile, line);
+	highscores[4] = std::stoi(line);
+
+	ifFile.close();
+}
+
+void Geometry::SaveHighscore(unsigned int s)
+{
+	std::cout << "LOG: Saving " << s << '\n';
+
+	ReadHighscore();
+
+	// Save highscore
+	std::ofstream ofFile;
+	ofFile.open("highscores.txt", std::ofstream::out | std::ofstream::trunc);
+
+	int biggerThan = -1;
+	int displace = 0;
+
+	if (s > highscores[0])
+		biggerThan = 0;
+	else if (s > highscores[1])
+		biggerThan = 1;
+	else if (s > highscores[2])
+		biggerThan = 2;
+	else if (s > highscores[3])
+		biggerThan = 3;
+	else if (s > highscores[4])
+		biggerThan = 4;
+
+	for (int i = 0; i < 5; ++i)
+	{
+		if (biggerThan == i)
+		{
+			ofFile << s;
+			displace = 1;
+		}
+		else
+			ofFile << highscores[i-displace];
+
+		ofFile << '\n';
+	}
+
+	ofFile.close();
 }
 
 ///

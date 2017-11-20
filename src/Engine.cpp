@@ -12,7 +12,7 @@
 #include <Engine.h>
 #include <Geometry.h>
 
-#define SPEED_MULT 1 //5
+#define SPEED_MULT 1 //6
 
 ///
 /// Startup & shutdown
@@ -85,6 +85,7 @@ bool Engine::Initialize(int argc, char *argv[])
 	geometryHandler.InitMatrixes();
 	geometryHandler.InitShaders();
 	geometryHandler.InitGeometry();
+	geometryHandler.InitFonts();
 
 	// Successfully initialized
 	Log("LOG: OpenGL window initialized");
