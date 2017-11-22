@@ -16,9 +16,9 @@ RCOMPILE_FLAGS = -D NDEBUG
 # Additional debug-specific flags
 DCOMPILE_FLAGS = -D DEBUG
 # Add additional include paths
-INCLUDES = -I $(SRC_PATH) -Iinclude $(shell pkg-config sdl2 --cflags) $(shell pkg-config --cflags freetype2)
+INCLUDES = -I $(SRC_PATH) -Iinclude $(shell pkg-config sdl2 --cflags)
 # General linker settings
-LINK_FLAGS = -L/usr/local/lib -lfreetype -lftgl $(shell pkg-config sdl2 --libs) -lglut -lGL -lSDL2_mixer 
+LINK_FLAGS = $(shell pkg-config sdl2 --libs) -lglut -lGL -lSDL2_mixer 
 # Additional release-specific linker settings
 RLINK_FLAGS =
 # Additional debug-specific linker settings
