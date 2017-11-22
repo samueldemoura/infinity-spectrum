@@ -30,7 +30,8 @@ void Geometry::InitMatrixes()
 	projectionMatrix = glm::perspective(glm::radians(90.0f), 16.0f/9.0f, 0.1f, 100.0f);
 
 	// View matrix: camera at (0,-1.5,5) looks at (0,-1.5,0), Y is up (0, 1, 0)
-	viewMatrix = glm::lookAt(glm::vec3(0, -1.62, 5), glm::vec3(0, -1.5, 0), glm::vec3(0, 1, 0));
+	//viewMatrix = glm::lookAt(glm::vec3(0, -1.62, 5), glm::vec3(0, -1.5, 0), glm::vec3(0, 1, 0));
+	viewMatrix = glm::lookAt(glm::vec3(0, 0, 6), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
 	// Model matrix: identity matrix
 	modelMatrix = glm::mat4(1.0f);
@@ -200,6 +201,63 @@ void Geometry::InitGeometry()
 
 	// Unbind vertex array object
 	glBindVertexArray(0);
+
+	//
+	// Element 2: 3d spaceship
+	//
+
+	// VAO
+	glGenVertexArrays(1, &VAO[2]);
+	glBindVertexArray(VAO[2]);
+
+	// Define vertices
+	static const GLfloat verticesShip[] = {
+		//  X     Y     Z       U     V               Normal
+		// bottom
+		 1.0f, 0.0f, 1.0f,   0.0f, 0.0f,   0.0f, -1.0f, 0.0f,//0
+		 1.0f, 0.0f,-1.0f,   0.0f, 1.0f,   0.0f, -1.0f, 0.0f,//1
+		-1.0f, 0.0f, 1.0f,   1.0f, 0.0f,   0.0f, -1.0f, 0.0f,//2
+		-1.0f, 0.0f,-1.0f,   1.0f, 1.0f,   0.0f, -1.0f, 0.0f,//3
+		-1.0f, 0.0f, 1.0f,   1.0f, 0.0f,   0.0f, -1.0f, 0.0f,//2
+		 1.0f, 0.0f,-1.0f,   0.0f, 1.0f,   0.0f, -1.0f, 0.0f,//1
+
+		// right
+		 1.0f, 0.0f, 1.0f,   0.0f, 0.0f,   1.0f, 0.0f, 0.0f,//0
+		 1.0f, 0.0f,-1.0f,   1.0f, 0.0f,   1.0f, 0.0f, 0.0f,//1
+		 0.0f, 3.0f, 0.0f,   0.5f, 0.5f,   1.0f, 0.0f, 0.0f,//4
+
+		// front
+		 1.0f, 0.0f, 1.0f,   0.0f, 0.0f,   0.0f, 0.0f, 1.0f,//0
+		-1.0f, 0.0f, 1.0f,   1.0f, 0.0f,   0.0f, 0.0f, 1.0f,//2
+		 0.0f, 3.0f, 0.0f,   0.5f, 0.5f,   0.0f, 0.0f, 1.0f,//4
+
+		// left
+		-1.0f, 0.0f, 1.0f,   0.0f, 0.0f,   -1.0f, 0.0f, 0.0f,//2
+		-1.0f, 0.0f,-1.0f,   1.0f, 0.0f,   -1.0f, 0.0f, 0.0f,//3
+		 0.0f, 3.0f, 0.0f,   0.5f, 0.5f,   -1.0f, 0.0f, 0.0f,//4
+
+		// back
+		 1.0f, 0.0f,-1.0f,   0.0f, 0.0f,    0.0f, 0.0f, -1.0f,//1
+		-1.0f, 0.0f,-1.0f,   1.0f, 0.0f,    0.0f, 0.0f, -1.0f,//3
+		 0.0f, 3.0f, 0.0f,   0.5f, 0.5f,    0.0f, 0.0f, -1.0f,//4
+	};
+
+	/// Create a vertex buffer object, bind it and pass vertices to it
+	glGenBuffers(1, &VBO[2]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesShip), verticesShip, GL_STATIC_DRAW);
+
+	// Set vertex attribute pointers
+	//                           index  size      type  normalize             stride                   offset pointer
+	glEnableVertexAttribArray(vert);
+	glVertexAttribPointer(        vert,    3, GL_FLOAT,  GL_FALSE, 8*sizeof(GLfloat),                            NULL);
+	glEnableVertexAttribArray(vertTexCoord);
+	glVertexAttribPointer(vertTexCoord,    2, GL_FLOAT,   GL_TRUE, 8*sizeof(GLfloat), (GLvoid*)(3 * sizeof(GL_FLOAT)) );
+	glEnableVertexAttribArray(vertNormal);
+	glVertexAttribPointer(  vertNormal,    3, GL_FLOAT,   GL_TRUE, 8*sizeof(GLfloat), (GLvoid*)(5 * sizeof(GL_FLOAT)) );
+
+	// Unbind vertex array object
+	glBindVertexArray(0);
 }
 
 ///
@@ -316,7 +374,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, menuTexture);
 
-		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.85f));
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(9.f, 9.f, 1.f));
 		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
 		pipelineMatrix = projectionMatrix * viewMatrix;
@@ -351,7 +409,7 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, gameOverTexture);
 
-		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.85f));
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(9.f, 9.f, 1.f));
 		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
 		pipelineMatrix = projectionMatrix * viewMatrix;
@@ -485,6 +543,31 @@ int Geometry::Draw(Uint32 elapsedTime, unsigned short int gameState)
 				}
 			}
 		}
+
+		// Draw the spaceship
+		globalLight.position = glm::vec3(dx, dy, 5.f);
+		globalLight.rgb = glm::vec3(1.3 * brightness * rgb.r / (float)255, brightness * rgb.g / (float)255, brightness * rgb.b / (float)255);
+
+		glUseProgram(shaderProgramID[0]);
+		glBindVertexArray(VAO[2]);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, obstacleTexture);
+
+		modelMatrix = glm::mat4(1.0f);
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, -1.5f, 4.f));
+		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+		//modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, -1.7f, 4.85f));
+		//modelMatrix = glm::scale(modelMatrix, glm::vec3(0.02f, 0.02f, 0.02f));
+		modelMatrix = glm::rotate(modelMatrix, -90 * ((float)PI/180), glm::vec3(1.f, 0.f, 0.f));
+		modelMatrix = glm::rotate(modelMatrix, 45 * ((float)PI/180), glm::vec3(0.f, 1.f, 0.f));
+		pipelineMatrix = projectionMatrix * viewMatrix;
+
+		glUniformMatrix4fv(uniformID[0], 1, GL_FALSE, &pipelineMatrix[0][0]);
+		glUniformMatrix4fv(uniformID[1], 1, GL_FALSE, &modelMatrix[0][0]);
+		glUniform1i(uniformID[2], 0);
+		glUniform3fv(uniformID[3], 1, &globalLight.position[0]);
+		glUniform3fv(uniformID[4], 1, &globalLight.rgb[0]);
+		glDrawArrays(GL_TRIANGLES, 0, 18);
 
 		// beautiful work of art, please do not judge
 		std::stringstream scoreText;

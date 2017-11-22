@@ -1,7 +1,7 @@
 #ifndef _GEOMETRY_H_
 #define _GEOMETRY_H_
 
-#define MAX_GEOM 2
+#define MAX_GEOM 3
 #define MAX_SHADERS 2
 
 #include <vector>
